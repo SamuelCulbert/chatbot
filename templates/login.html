@@ -10,8 +10,8 @@
   {% extends "layout.html" %}
   {% block title %}Login | Samuel Chat{% endblock %}
   {% block content %}
-  <div class="login-box">
-    <h2>Welcome Back 👋</h2>
+  <div class="login-box large">
+    <h2>Welcome 👋</h2>
     <input id="username" placeholder="Username">
     <input id="password" type="password" placeholder="Password">
     <div class="actions">
@@ -23,19 +23,27 @@
   
   <script>
   async function signup(){
-    const res = await fetch('/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      username: username.value, password: password.value
-    })});
-    const data = await res.json();
-    status.innerText = data.error || "✅ Signup successful!";
+    const u=username.value.trim(), p=password.value.trim();
+    if(!u||!p){status.innerText="Please fill all fields";return;}
+    const res=await fetch('/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const data=await res.json();
+    if(data.success){
+      status.innerText="✅ Sign up success!";
+      status.style.color="green";
+      setTimeout(()=>window.location.href='/chat',2000); // wait 2 s then redirect
+    }else status.innerText=data.error||"Error";
   }
+  
   async function login(){
-    const res = await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      username: username.value, password: password.value
-    })});
-    const data = await res.json();
-    if(data.success){ window.location.href='/chat'; }
-    else status.innerText = data.error;
+    const u=username.value.trim(), p=password.value.trim();
+    if(!u||!p){status.innerText="Please fill all fields";return;}
+    const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const data=await res.json();
+    if(data.success) window.location.href='/chat';
+    else{
+      status.innerText=data.error||"Login failed";
+      status.style.color="red";
+    }
   }
   </script>
   {% endblock %}
