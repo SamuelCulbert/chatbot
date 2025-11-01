@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import os
 import openai
 app = Flask(__name__)
-open.ai_key = os.getenv("OPEN_API_KEY")
+open.api_key = os.getenv("OPEN_API_KEY")
 @app.route("/")
 def home():
     return "mini chatbot is running on koyeb!"
@@ -29,3 +29,4 @@ def chat():
 if __name__ == "__main__":
 
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
