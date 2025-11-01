@@ -1,1 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/base.css">
+  <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+  <div class="navbar">
+    <h1>Samuel Chat</h1>
+    {% if session.get('user_id') %}
+      <a href="/logout">Logout</a>
+    {% endif %}
+  </div>
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
 
