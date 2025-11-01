@@ -46,6 +46,26 @@ body {
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+
+.login-box.large {
+  width: 400px;
+  max-width: 90%;
+  padding: 50px;
+}
+.login-box input {
+  font-size: 1.1rem;
+  padding: 14px;
+}
+.login-box button {
+  font-size: 1rem;
+  padding: 12px 25px;
+}
+#status {
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+
 button {
   background: linear-gradient(90deg, #0078D7, #00B386);
   border: none;
