@@ -10,6 +10,10 @@ app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 DB_name = "database.db"
 
+@app.route('/base.css')
+def server_base_css():
+    return send_from_directory('.', 'base.css')
+
 def init_db():
     with sqlite3.connect(DB_name) as conn:
         c = conn.cursor()
@@ -127,4 +131,5 @@ def delete_chat(chat_id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
