@@ -1,21 +1,16 @@
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for, render_template
-import google.generativeai as genai
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import sqlite3
+import google.generativeai as genai
 import os
 
 app = Flask(__name__)
 app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
-
-# Configure Gemini API key (must be set in Koyeb Secrets)
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-DB_name = "database.db"
 
-@app.route('/base.css')
-def server_base_css():
-    return send_from_directory('.', 'base.css')
+DB_NAME = "database.db"
 
 def init_db():
-    with sqlite3.connect(DB_name) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         c.execute("""CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,17 +23,22 @@ def init_db():
                         reply TEXT,
                         FOREIGN KEY (user_id) REFERENCES users(id))""")
         conn.commit()
+
 init_db()
 
+
+# -------------------- ROUTES -------------------- #
 @app.route("/")
 def home():
     if "user_id" in session:
-        return redirect ("/chat")
+        return redirect("/chat")
     return redirect("/login")
+
 
 @app.route("/login")
 def login_page():
     return render_template("login.html")
+
 
 @app.route("/chat")
 def chat_page():
@@ -46,12 +46,14 @@ def chat_page():
         return redirect("/login")
     return render_template("chat.html")
 
+
+# -------------------- AUTH -------------------- #
 @app.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json()
     username = data["username"]
     password = data["password"]
-    with sqlite3.connect(DB_name) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         try:
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
@@ -59,6 +61,7 @@ def signup():
             return jsonify({"success": True})
         except sqlite3.IntegrityError:
             return jsonify({"error": "Username already exists"}), 400
+
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -74,13 +77,14 @@ def login():
         else:
             return jsonify({"error": "Invalid username or password"}), 401
 
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     return redirect("/login")
-    
 
-# 🌐 Chat endpoint
+
+# -------------------- CHAT -------------------- #
 @app.route("/chat_api", methods=["POST"])
 def chat_api():
     if "user_id" not in session:
@@ -96,7 +100,7 @@ def chat_api():
         response = model.generate_content(message)
         reply = response.text.strip()
 
-        with sqlite3.connect(DB_name) as conn:
+        with sqlite3.connect(DB_NAME) as conn:
             c = conn.cursor()
             c.execute("INSERT INTO chats (user_id, message, reply) VALUES (?, ?, ?)",
                       (session["user_id"], message, reply))
@@ -111,7 +115,7 @@ def chat_api():
 def get_chats():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 403
-    with sqlite3.connect(DB_name) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         c.execute("SELECT id, message, reply FROM chats WHERE user_id=?", (session["user_id"],))
         chats = [{"id": row[0], "message": row[1], "reply": row[2]} for row in c.fetchall()]
@@ -122,7 +126,7 @@ def get_chats():
 def delete_chat(chat_id):
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 403
-    with sqlite3.connect(DB_name) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         c.execute("DELETE FROM chats WHERE id=? AND user_id=?", (chat_id, session["user_id"]))
         conn.commit()
@@ -131,5 +135,3 @@ def delete_chat(chat_id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
-
-
