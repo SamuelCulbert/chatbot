@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import openai
 app = Flask(__name__)
@@ -25,9 +25,15 @@ def chat():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@app.route("/ui")
+def ui():
+    return send_from_directory(".", "index.html")
+
 
 if __name__ == "__main__":
 
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
