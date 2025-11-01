@@ -18,7 +18,7 @@ def chat():
 
     try:
         # ✅ Correct model name for current API (no 'models/' prefix)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-pro")
 
         # ✅ Correct generation call
         response = model.generate_content(message)
@@ -36,4 +36,5 @@ def ui():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
