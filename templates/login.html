@@ -20,31 +20,71 @@
     </div>
     <p id="status"></p>
   </div>
-  
   <script>
-  async function signup(){
-    const u=username.value.trim(), p=password.value.trim();
-    if(!u||!p){status.innerText="Please fill all fields";return;}
-    const res=await fetch('/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
-    const data=await res.json();
-    if(data.success){
-      status.innerText="✅ Sign up success!";
-      status.style.color="green";
-      setTimeout(()=>window.location.href='/chat',2000); // wait 2 s then redirect
-    }else status.innerText=data.error||"Error";
-  }
-  
-  async function login(){
-    const u=username.value.trim(), p=password.value.trim();
-    if(!u||!p){status.innerText="Please fill all fields";return;}
-    const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
-    const data=await res.json();
-    if(data.success) window.location.href='/chat';
-    else{
-      status.innerText=data.error||"Login failed";
-      status.style.color="red";
+      async function signup(){
+      const u = username.value.trim();
+      const p = password.value.trim();
+      const statusEl = document.getElementById('status');
+    
+      if(!u || !p){
+        statusEl.innerText = "Please fill all fields.";
+        statusEl.style.color = "red";
+        return;
+      }
+    
+      try {
+        const res = await fetch('/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+    
+        const data = await res.json();
+    
+        if (data.success) {
+          statusEl.innerText = "✅ Sign up success! Redirecting...";
+          statusEl.style.color = "green";
+          setTimeout(() => { window.location.href = '/chat'; }, 2000);
+        } else {
+          statusEl.innerText = data.error || "Signup failed.";
+          statusEl.style.color = "red";
+        }
+      } catch (err) {
+        statusEl.innerText = "⚠️ Network error.";
+        statusEl.style.color = "red";
+      }
     }
-  }
+    
+    async function login(){
+      const u = username.value.trim();
+      const p = password.value.trim();
+      const statusEl = document.getElementById('status');
+    
+      if(!u || !p){
+        statusEl.innerText = "Please fill all fields.";
+        statusEl.style.color = "red";
+        return;
+      }
+    
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+    
+        if (data.success) {
+          window.location.href = '/chat';
+        } else {
+          statusEl.innerText = data.error || "Login failed.";
+          statusEl.style.color = "red";
+        }
+      } catch (err) {
+        statusEl.innerText = "⚠️ Network error.";
+        statusEl.style.color = "red";
+      }
+    }
   </script>
   {% endblock %}
 </body>
