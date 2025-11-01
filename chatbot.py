@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
 import os
-import openai
 import google.generativeai as genai
 app = Flask(__name__)
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -29,6 +28,7 @@ def ui():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
