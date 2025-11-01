@@ -22,7 +22,7 @@ def chat():
 
     try:
         # Choose model (flash = fast, pro = better quality)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         # Generate a response
         response = model.generate_content(user_message)
@@ -52,3 +52,4 @@ def ui():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
