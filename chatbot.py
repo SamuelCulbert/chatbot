@@ -23,13 +23,12 @@ def init_db():
                         reply TEXT,
                         FOREIGN KEY (user_id) REFERENCES users(id))""")
         conn.commit()
-
 init_db()
 
 
-# -------------------- ROUTES -------------------- #
 @app.route("/")
 def home():
+    # auto-redirect logged-in user
     if "user_id" in session:
         return redirect("/chat")
     return redirect("/login")
@@ -37,6 +36,9 @@ def home():
 
 @app.route("/login")
 def login_page():
+    # prevent seeing login if already logged in
+    if "user_id" in session:
+        return redirect("/chat")
     return render_template("login.html")
 
 
@@ -47,17 +49,19 @@ def chat_page():
     return render_template("chat.html")
 
 
-# -------------------- AUTH -------------------- #
+# ---------- API ENDPOINTS ---------- #
 @app.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json()
-    username = data["username"]
-    password = data["password"]
+    username, password = data["username"], data["password"]
+
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            c.execute("INSERT INTO users (username,password) VALUES (?,?)", (username,password))
             conn.commit()
+            user_id = c.lastrowid
+            session["user_id"] = user_id
             return jsonify({"success": True})
         except sqlite3.IntegrityError:
             return jsonify({"error": "Username already exists"}), 400
@@ -67,15 +71,20 @@ def signup():
 def login():
     data = request.get_json()
     username, password = data["username"], data["password"]
+
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
-        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
+        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username,password))
         user = c.fetchone()
-        if user:
-            session["user_id"] = user[0]
-            return jsonify({"success": True})
-        else:
-            return jsonify({"error": "Invalid username or password"}), 401
+        if not user:
+            # separate error for unknown user
+            c.execute("SELECT id FROM users WHERE username=?", (username,))
+            if not c.fetchone():
+                return jsonify({"error": "User not found"}), 404
+            return jsonify({"error": "Invalid password"}), 401
+
+        session["user_id"] = user[0]
+        return jsonify({"success": True})
 
 
 @app.route("/logout")
@@ -135,3 +144,4 @@ def delete_chat(chat_id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
