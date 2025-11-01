@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Mini Chatbot</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+</head>
+<body>
+  {% extends "layout.html" %}
+  {% block title %}Chat | Samuel Chat{% endblock %}
+  {% block content %}
+  <div class="chat-container">
+    <div class="sidebar">
+      <h3>Your Chats</h3>
+      <button onclick="loadChats()">⟳ Refresh</button>
+      <div id="chatList"></div>
+    </div>
+    <div class="chatbox">
+      <div id="messages"></div>
+      <div class="input-area">
+        <input id="msg" placeholder="Type your message..." onkeypress="if(event.key==='Enter')send()">
+        <button onclick="send()">Send</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+  async function loadChats(){
+    const res = await fetch('/chats');
+    const chats = await res.json();
+    const list = document.getElementById('chatList');
+    list.innerHTML = '';
+    chats.forEach(c=>{
+      const div=document.createElement('div');
+      div.className='chat-item';
+      div.innerHTML=`<p>${c.message}</p><button onclick="del(${c.id})">🗑</button>`;
+      div.onclick=()=>showChat(c);
+      list.appendChild(div);
+    });
+  }
+  function showChat(c){
+    document.getElementById('messages').innerHTML=`<p class='user'><b>You:</b> ${c.message}</p><p class='bot'><b>Bot:</b> ${c.reply}</p>`;
+  }
+  async function send(){
+    const msg=document.getElementById('msg').value;
+    const res=await fetch('/chat_api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    const data=await res.json();
+    document.getElementById('messages').innerHTML+=`<p class='user'><b>You:</b> ${msg}</p><p class='bot'><b>Bot:</b> ${data.reply}</p>`;
+    document.getElementById('msg').value='';
+    loadChats();
+  }
+  async function del(id){
+    await fetch('/delete_chat/'+id,{method:'DELETE'});
+    loadChats();
+  }
+  window.onload=loadChats;
+  </script>
+  {% endblock %}
+</body>
+</html>
