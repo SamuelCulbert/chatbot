@@ -11,13 +11,20 @@ def home():
 def chat():
     data = request.get_json()
     message = data.get("message", "")
+
     if not message:
         return jsonify({"error": "No message provided"}), 400
 
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        # ✅ Gemini model name update
+        model = genai.GenerativeModel("models/gemini-1.5-flash")
+
+        # ✅ Correct method for text generation
         response = model.generate_content(message)
+
+        # Response text
         return jsonify({"reply": response.text.strip()})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
@@ -28,6 +35,7 @@ def ui():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
