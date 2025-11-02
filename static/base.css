@@ -290,25 +290,44 @@ button {
 
 .side-btn {
   background: linear-gradient(90deg, #0078D7, #00B386);
-  color: #fff;
+  color: #ffffff !important;        /* Ensure visibility */
   border: none;
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   margin: 10px 0;
-  padding: 10px 0;
+  padding: 12px 0;
   cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   transition: transform 0.1s ease, opacity 0.2s ease;
 }
 
-.side-btn:hover {
+.side-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  z-index: -1;
   opacity: 0.9;
-  transform: scale(1.05);
+}
+
+.side-btn:hover {
+  opacity: 1;
+  transform: scale(1.03);
+  filter: brightness(1.15);
 }
 
 .logout {
   background: linear-gradient(90deg, #FF4D4D, #FF7A7A);
+  color: #ffffff !important;  /* Fix invisible text issue */
 }
+
 
 /* Chat area */
 .chat-area {
