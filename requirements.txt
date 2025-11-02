@@ -3,4 +3,5 @@ google-generativeai>=0.8.2
 psycopg2-binary>=2.9
 imagekitio>=3.0.1
 replicate
+requests
 
