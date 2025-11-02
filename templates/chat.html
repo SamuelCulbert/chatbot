@@ -6,29 +6,39 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
   <title>CulbertAi 💬</title>
   <style>
-    .chat-wrapper {
-      display: flex;
-      height: 100vh;
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: "Inter", sans-serif;
       background: linear-gradient(135deg, #002244, #00B386);
       color: #fff;
-      font-family: "Inter", sans-serif;
+      overflow: hidden;
     }
 
+    /* MAIN CONTAINER */
+    .chat-wrapper {
+      display: flex;
+      height: 100%;
+      flex-direction: row;
+    }
+
+    /* SIDEBAR */
     .sidebar {
-      background: rgba(0,0,0,0.3);
+      width: 240px;
+      background: rgba(0,0,0,0.25);
       backdrop-filter: blur(10px);
-      width: 250px;
-      padding: 30px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+      padding: 20px;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      z-index: 10;
     }
 
     .sidebar h2 {
-      font-size: 1.6rem;
-      background: linear-gradient(90deg, #00B4DB, #0083B0);
+      font-size: 1.5rem;
+      background: linear-gradient(90deg, #00B4DB, #00FFAA);
       -webkit-background-clip: text;
       color: transparent;
       margin-bottom: 40px;
@@ -36,110 +46,168 @@
 
     .sidebar button {
       width: 100%;
-      margin: 8px 0;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
       background: linear-gradient(90deg, #0078D7, #00B386);
-      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      color: #fff;
       font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
     }
 
     .sidebar button:hover {
       transform: scale(1.03);
-      box-shadow: 0 0 15px rgba(0,255,204,0.5);
+      box-shadow: 0 0 15px rgba(0,255,200,0.5);
     }
 
+    /* CHAT AREA */
     .chat-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(12px);
-      border-radius: 12px;
-      margin: 20px;
-      padding: 15px;
-      box-shadow: inset 0 0 25px rgba(0,255,255,0.1);
+      border-radius: 0;
+      padding: 10px;
+      overflow: hidden;
     }
 
     #messages {
       flex: 1;
       overflow-y: auto;
-      padding-right: 10px;
+      padding: 10px;
       scroll-behavior: smooth;
     }
 
     .msg {
-      margin: 12px 0;
-      line-height: 1.4;
+      margin: 10px 0;
       animation: fadeIn 0.3s ease;
+      word-wrap: break-word;
     }
 
-    .msg.user .sender { color: #00BFFF; }
-    .msg.bot .sender { color: #00FFB0; }
+    .msg.user .sender { color: #00BFFF; font-weight: bold; }
+    .msg.bot .sender { color: #00FFAA; font-weight: bold; }
 
     .msg .text {
       display: inline-block;
       background: rgba(255,255,255,0.1);
       padding: 10px 15px;
       border-radius: 10px;
-      margin-left: 5px;
+      margin-top: 5px;
+      max-width: 85%;
+      line-height: 1.4;
     }
 
     .generated-image {
-      max-width: 80%;
+      max-width: 90%;
       border-radius: 12px;
-      margin-top: 10px;
-      box-shadow: 0 4px 25px rgba(0,0,0,0.4);
-      animation: popIn 0.4s ease;
+      margin-top: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
+    /* INPUT BAR */
     .input-bar {
       display: flex;
       align-items: center;
-      background: rgba(0,0,0,0.2);
-      border-radius: 10px;
       padding: 10px;
-      margin-top: 10px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      margin-top: 8px;
     }
 
     .input-bar input[type=text] {
       flex: 1;
-      padding: 10px 15px;
       border: none;
       border-radius: 8px;
-      outline: none;
+      padding: 12px 15px;
+      font-size: 1rem;
       background: rgba(255,255,255,0.15);
       color: white;
-      font-size: 1rem;
+      outline: none;
     }
 
     .input-bar button {
-      background: linear-gradient(90deg, #0078D7, #00B386);
+      background: linear-gradient(90deg, #00B386, #0078D7);
       border: none;
       color: white;
-      font-weight: 600;
+      font-weight: bold;
       border-radius: 8px;
-      margin-left: 8px;
       padding: 10px 14px;
+      margin-left: 6px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: 0.3s ease;
     }
 
     .input-bar button:hover {
-      background: linear-gradient(90deg, #00B386, #0078D7);
+      background: linear-gradient(90deg, #0078D7, #00B386);
+    }
+
+    /* MOBILE OPTIMIZATION */
+    @media (max-width: 768px) {
+      body, html {
+        overflow: hidden;
+      }
+
+      .chat-wrapper {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        height: auto;
+        box-shadow: none;
+        padding: 10px 15px;
+        background: rgba(0,0,0,0.4);
+      }
+
+      .sidebar h2 {
+        font-size: 1.3rem;
+        margin: 0;
+      }
+
+      .sidebar button {
+        flex: 1;
+        font-size: 0.9rem;
+        margin: 0 5px;
+        padding: 8px;
+      }
+
+      .chat-area {
+        flex: 1;
+        padding: 8px;
+      }
+
+      .input-bar {
+        padding: 6px;
+        margin-bottom: 5px;
+      }
+
+      .input-bar input[type=text] {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+
+      .input-bar button {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+      }
+
+      .msg .text {
+        font-size: 0.9rem;
+        max-width: 95%;
+      }
+
+      .generated-image {
+        max-width: 100%;
+      }
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
@@ -151,8 +219,8 @@
   <div class="chat-wrapper">
     <div class="sidebar">
       <h2>CulbertAi 🤖</h2>
-      <button onclick="window.location.href='/settings'">⚙️ Settings</button>
-      <button onclick="window.location.href='/logout'">🚪 Logout</button>
+      <button onclick="window.location.href='/settings'">⚙️</button>
+      <button onclick="window.location.href='/logout'">🚪</button>
     </div>
 
     <div class="chat-area">
@@ -201,7 +269,8 @@
       const res = await fetch('/chat_api', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({message: msg})
+        body: JSON.stringify({message: msg}),
+        credentials: 'include'
       });
       const data = await res.json();
       loading.textContent = data.reply || `⚠️ ${data.error || 'Bot error'}`;
@@ -224,18 +293,17 @@
   }
 
   async function uploadImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  addMessage('You', '🖼️ Uploading image...');
+    const file = e.target.files[0];
+    if (!file) return;
+    addMessage('You', '🖼️ Uploading image...');
 
-  const formData = new FormData();
-  formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-  try {
     const res = await fetch('/upload_image', {
       method: 'POST',
       body: formData,
-      credentials: 'include' // ✅ ensures session is included
+      credentials: 'include'
     });
 
     const data = await res.json();
@@ -244,12 +312,9 @@
     } else {
       addMessage('Bot', '⚠️ ' + (data.error || 'Upload failed'));
     }
-  } catch (err) {
-    addMessage('Bot', '❌ Upload error');
-  }
 
-  e.target.value = ''; 
-  scrollToBottom();
+    e.target.value = '';
+    scrollToBottom();
   }
 
   async function generateImage() {
@@ -262,14 +327,11 @@
       const res = await fetch('/generate_image', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({prompt})
+        body: JSON.stringify({prompt}),
+        credentials: 'include'
       });
       const data = await res.json();
-      if (data.image_url) {
-        loading.innerHTML = `<img src="${data.image_url}" class="generated-image" alt="AI generated image">`;
-      } else {
-        loading.textContent = data.error || '❌ Failed to generate image';
-      }
+      loading.textContent = data.reply || data.error || '❌ Feature not available right now';
     } catch (err) {
       loading.textContent = '⚠️ Network error';
     }
