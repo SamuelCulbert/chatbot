@@ -1,1 +1,59 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <title>SIGNUP</title>
+</head>
+<body>
+  {% extends "layout.html" %}
+  {% block title %}Sign Up | Samuel Chat{% endblock %}
+  {% block content %}
+  <div class="signup-box large">
+    <h2>Create Account 🎉</h2>
+    <input id="email" placeholder="Email">
+    <input id="birthday" type="date" placeholder="Birthday">
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <input id="confirm" type="password" placeholder="Confirm Password">
+    <button onclick="signup()">Sign Up</button>
+    <p id="status"></p>
+  </div>
+  
+  <script>
+    async function signup(){
+    const email = email.value.trim();
+    const birthday = birthday.value;
+    const username = username.value.trim();
+    const password = password.value.trim();
+    const confirm = confirm.value.trim();
+    const statusEl = document.getElementById("status");
+  
+    if(!email || !birthday || !username || !password || !confirm){
+      statusEl.innerText="Please fill all fields.";
+      return;
+    }
+    if(password !== confirm){
+      statusEl.innerText="Passwords do not match.";
+      return;
+    }
+  
+    const res = await fetch('/signup', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, birthday, username, password })
+    });
+  
+    const data = await res.json();
+    if(data.success){
+      statusEl.innerText="✅ Account created! Redirecting...";
+      setTimeout(()=> window.location.href='/chat', 2000);
+    } else {
+      statusEl.innerText=data.error || "Signup failed.";
+    }
+  }
+  </script>
+  {% endblock %}
+</body>
+</html>
