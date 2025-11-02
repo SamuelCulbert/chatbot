@@ -5,15 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
   <title>CulbertAi 💬</title>
+  <style>
+    .chat-wrapper {
+      display: flex;
+      height: 100vh;
+      background: linear-gradient(135deg, #002244, #00B386);
+      color: #fff;
+      font-family: "Inter", sans-serif;
+    }
+
+    .sidebar {
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      width: 250px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+    }
+
+    .sidebar h2 {
+      font-size: 1.6rem;
+      background: linear-gradient(90deg, #00B4DB, #0083B0);
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 40px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #0078D7, #00B386);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .sidebar button:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 15px rgba(0,255,204,0.5);
+    }
+
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      margin: 20px;
+      padding: 15px;
+      box-shadow: inset 0 0 25px rgba(0,255,255,0.1);
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      margin: 12px 0;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .msg.user .sender { color: #00BFFF; }
+    .msg.bot .sender { color: #00FFB0; }
+
+    .msg .text {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-left: 5px;
+    }
+
+    .generated-image {
+      max-width: 80%;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+      animation: popIn 0.4s ease;
+    }
+
+    .input-bar {
+      display: flex;
+      align-items: center;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .input-bar input[type=text] {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 1rem;
+    }
+
+    .input-bar button {
+      background: linear-gradient(90deg, #0078D7, #00B386);
+      border: none;
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      margin-left: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .input-bar button:hover {
+      background: linear-gradient(90deg, #00B386, #0078D7);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </head>
 <body>
   {% extends "layout.html" %}
   {% block title %}Chat | CulbertAi{% endblock %}
   {% block content %}
-  
+
   <div class="chat-wrapper">
     <div class="sidebar">
-      <h2>CulbertAi</h2>
+      <h2>CulbertAi 🤖</h2>
       <button onclick="window.location.href='/settings'">⚙️ Settings</button>
       <button onclick="window.location.href='/logout'">🚪 Logout</button>
     </div>
@@ -21,13 +158,11 @@
     <div class="chat-area">
       <div id="messages" class="messages"></div>
       <div class="input-bar">
-        <div class="input-bar">
-          <input id="message" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
-          <button onclick="generateImage()">🎨</button>
-          <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
-          <button onclick="document.getElementById('imageUpload').click()">📷</button>
-          <button onclick="sendMessage()">Send</button>
-        </div>
+        <input id="message" type="text" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
+        <button onclick="generateImage()">🎨</button>
+        <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
+        <button onclick="document.getElementById('imageUpload').click()">📷</button>
+        <button onclick="sendMessage()">Send</button>
       </div>
     </div>
   </div>
@@ -69,11 +204,7 @@
         body: JSON.stringify({message: msg})
       });
       const data = await res.json();
-      if (data.reply) {
-        loading.textContent = data.reply;
-      } else {
-        loading.textContent = `⚠️ ${data.error || 'Bot error'}`;
-      }
+      loading.textContent = data.reply || `⚠️ ${data.error || 'Bot error'}`;
     } catch (err) {
       loading.textContent = '❌ Connection error';
     }
@@ -92,57 +223,49 @@
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  loadChats();
-
   async function uploadImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  addMessage('You', '🖼️ Uploading image...');
+    const file = e.target.files[0];
+    if (!file) return;
+    addMessage('You', '🖼️ Uploading image...');
 
-  const formData = new FormData();
-  formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-  const res = await fetch('/upload_image', {
-    method: 'POST',
-    body: formData
-  });
+    const res = await fetch('/upload_image', { method: 'POST', body: formData });
+    const data = await res.json();
+    addMessage('Bot', data.reply || `⚠️ ${data.error || 'Upload failed'}`);
 
-  const data = await res.json();
-  if (data.reply) {
-    addMessage('Bot', data.reply);
-  } else {
-    addMessage('Bot', '⚠️ ' + (data.error || 'Upload failed'));
-  }
-
-  e.target.value = ''; // clear file input
-  scrollToBottom();
+    e.target.value = ''; 
+    scrollToBottom();
   }
 
   async function generateImage() {
-  const prompt = document.getElementById('message').value.trim();
-  if (!prompt) return;
-  addMessage('You', '🎨 ' + prompt);
-  const loading = addMessage('Bot', '🧠 Generating image...');
-  
-  try {
-    const res = await fetch('/generate_image', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({prompt})
-    });
-    const data = await res.json();
-    if (data.image) {
-      loading.innerHTML = `<img src="${data.image}" class="generated-image" alt="AI image">`;
-    } else {
-      loading.textContent = data.error || '❌ Failed to generate image';
+    const prompt = document.getElementById('message').value.trim();
+    if (!prompt) return;
+    addMessage('You', '🎨 ' + prompt);
+    const loading = addMessage('Bot', '🧠 Generating image...');
+
+    try {
+      const res = await fetch('/generate_image', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({prompt})
+      });
+      const data = await res.json();
+      if (data.image_url) {
+        loading.innerHTML = `<img src="${data.image_url}" class="generated-image" alt="AI generated image">`;
+      } else {
+        loading.textContent = data.error || '❌ Failed to generate image';
+      }
+    } catch (err) {
+      loading.textContent = '⚠️ Network error';
     }
-  } catch (err) {
-    loading.textContent = '⚠️ Network error';
+    scrollToBottom();
   }
-  scrollToBottom();
-  }
+
+  loadChats();
   </script>
-  
+
   {% endblock %}
 </body>
 </html>
