@@ -22,38 +22,98 @@
   </div>
   
   <script>
-    async function signup(){
-    const email = email.value.trim();
-    const birthday = birthday.value;
-    const username = username.value.trim();
-    const password = password.value.trim();
-    const confirm = confirm.value.trim();
+    async function signup() {
+    const email = document.getElementById("email").value.trim();
+    const birthday = document.getElementById("birthday").value;
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirm = document.getElementById("confirm").value.trim();
     const statusEl = document.getElementById("status");
   
-    if(!email || !birthday || !username || !password || !confirm){
-      statusEl.innerText="Please fill all fields.";
-      return;
-    }
-    if(password !== confirm){
-      statusEl.innerText="Passwords do not match.";
+    statusEl.style.color = "red";
+  
+    if (!email || !birthday || !username || !password || !confirm) {
+      statusEl.textContent = "Please fill in all fields.";
       return;
     }
   
-    const res = await fetch('/signup', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, birthday, username, password })
-    });
+    if (password !== confirm) {
+      statusEl.textContent = "Passwords do not match.";
+      return;
+    }
   
-    const data = await res.json();
-    if(data.success){
-      statusEl.innerText="✅ Account created! Redirecting...";
-      setTimeout(()=> window.location.href='/chat', 2000);
-    } else {
-      statusEl.innerText=data.error || "Signup failed.";
+    statusEl.textContent = "⏳ Creating your account...";
+  
+    try {
+      const res = await fetch("/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, birthday, username, password })
+      });
+  
+      const data = await res.json();
+  
+      if (data.success) {
+        statusEl.style.color = "green";
+        statusEl.textContent = "✅ Account created! Redirecting...";
+        setTimeout(() => window.location.href = "/chat", 2000);
+      } else {
+        statusEl.textContent = data.error || "Signup failed.";
+      }
+    } catch (e) {
+      statusEl.textContent = "⚠️ Connection error. Try again.";
     }
   }
   </script>
+  
+  <style>
+    .signup-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 420px;
+      max-width: 90%;
+      margin: 50px auto;
+      padding: 50px 40px;
+      background: rgba(255,255,255,0.96);
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .signup-box input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1.1rem;
+    }
+    
+    .signup-box button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(90deg, #0078D7, #00B386);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    
+    .signup-box button:hover {
+      transform: scale(1.03);
+    }
+    
+    #status {
+      margin-top: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+  </style>
   {% endblock %}
+
 </body>
 </html>
