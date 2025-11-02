@@ -1,6 +1,7 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from imagekitio import ImageKit
+import replicate
 import base64
 import os
 import psycopg2
@@ -14,7 +15,7 @@ app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 imagekit = ImageKit(
     private_key=os.getenv("IMAGEKIT_PRIVATE_KEY"),
     public_key=os.getenv("IMAGEKIT_PUBLIC_KEY"),
@@ -264,35 +265,30 @@ def upload_image():
 def generate_image():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 403
-
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # 1️⃣ Generate image from Gemini
-        model = genai.GenerativeModel("models/gemini-2.5-flash")
-        result = model.generate_image(prompt)
-
-        if not hasattr(result, "image_base64") or not result.image_base64:
-            return jsonify({"error": "Gemini did not return image data"}), 500
-
-        image_data = base64.b64decode(result.image_base64)
-
-        # 2️⃣ Upload to ImageKit
-        upload = imagekit.upload(
-            file=image_data,
-            file_name=f"generated_{session['user_id']}.png"
+        # 1️⃣ generate with replicate (sdxl-lightning is fast)
+        output = replicate.run(
+            "stability-ai/sdxl-lightning:5d4d49e6b845ca52f8ad4cd9e9d9e8f0d177f47a9a8c3df31b43b07efda3d166",
+            input={"prompt": prompt}
         )
+        image_url_temp = output[0]
 
+        # 2️⃣ download + upload to ImageKit
+        import requests
+        img_data = requests.get(image_url_temp).content
+        upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
         image_url = upload["response"]["url"]
 
-        # 3️⃣ Save a placeholder and URL to DB
+        # 3️⃣ save placeholder + URL
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
+                "INSERT INTO chats (user_id, message, reply) VALUES (%s,%s,%s);",
                 (session["user_id"], f"🎨 Generated image: {prompt}", image_url)
             )
             conn.commit()
@@ -300,7 +296,6 @@ def generate_image():
         return jsonify({"image": image_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # ----------------- Settings update API ----------------- #
 @app.route("/update_settings", methods=["POST"])
@@ -341,6 +336,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
