@@ -1,5 +1,6 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from imagekitio import ImageKit
 import os
 import psycopg2
 import psycopg2.extras
@@ -12,6 +13,12 @@ app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+imagekit = ImageKit(
+    private_key=os.getenv("IMAGEKIT_PRIVATE_KEY"),
+    public_key=os.getenv("IMAGEKIT_PUBLIC_KEY"),
+    url_endpoint=os.getenv("IMAGEKIT_URL_ENDPOINT")
+)
 
 # Database connection string from environment (Neon / Supabase / Koyeb DB)
 DB_URL = os.getenv("DATABASE_URL")
@@ -219,6 +226,60 @@ def delete_chat(chat_id):
         conn.commit()
     return jsonify({"success": True})
 
+
+@app.route("/upload_image", methods=["POST"])
+def upload_image():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    # Upload to ImageKit temporarily
+    upload = imagekit.upload(
+        file=file,  # can be file object
+        file_name=file.filename,
+        folder="/temp_uploads/",
+        use_unique_file_name=True
+    )
+
+    # Delete immediately after response (optional)
+    file_url = upload["response"]["url"]
+    file_id = upload["response"]["fileId"]
+
+    # Ask Gemini about the image
+    try:
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
+        result = model.generate_content([
+            {"role": "user", "parts": [
+                {"text": "Describe this image:"},
+                {"inline_data": {"mime_type": file.mimetype, "data": file.read()}}
+            ]}
+        ])
+        reply = result.text.strip() if result and result.text else "No response."
+
+        # Immediately delete file from ImageKit (save storage)
+        imagekit.delete_file(file_id)
+
+        # Store as text-only history
+        with get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
+                (session["user_id"], "🖼️ Image uploaded", reply)
+            )
+            conn.commit()
+
+        return jsonify({"reply": reply})
+    except Exception as e:
+        try:
+            imagekit.delete_file(file_id)
+        except Exception:
+            pass
+        return jsonify({"error": str(e)}), 500
+
+
 # ----------------- Settings update API ----------------- #
 @app.route("/update_settings", methods=["POST"])
 def update_settings():
@@ -258,5 +319,6 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
