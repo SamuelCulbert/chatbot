@@ -236,32 +236,17 @@ def upload_image():
     if not file:
         return jsonify({"error": "No file uploaded"}), 400
 
-    # Upload to ImageKit temporarily
-    upload = imagekit.upload(
-        file=file,  # can be file object
-        file_name=file.filename,
-        use_unique_file_name=True
-    )
-
-    # Delete immediately after response (optional)
-    file_url = upload["response"]["url"]
-    file_id = upload["response"]["fileId"]
-
-    # Ask Gemini about the image
     try:
+        content = file.read()
         model = genai.GenerativeModel("models/gemini-2.5-flash")
         result = model.generate_content([
             {"role": "user", "parts": [
                 {"text": "Describe this image:"},
-                {"inline_data": {"mime_type": file.mimetype, "data": file.read()}}
+                {"inline_data": {"mime_type": file.mimetype, "data": content}}
             ]}
         ])
         reply = result.text.strip() if result and result.text else "No response."
 
-        # Immediately delete file from ImageKit (save storage)
-        imagekit.delete_file(file_id)
-
-        # Store as text-only history
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -272,10 +257,6 @@ def upload_image():
 
         return jsonify({"reply": reply})
     except Exception as e:
-        try:
-            imagekit.delete_file(file_id)
-        except Exception:
-            pass
         return jsonify({"error": str(e)}), 500
 
 
@@ -318,6 +299,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
