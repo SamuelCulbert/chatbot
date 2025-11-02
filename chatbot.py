@@ -271,10 +271,10 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # Generate image via Replicate (stable public model)
+        # ✅ Use a currently working model
         output = replicate.run(
-            "stability-ai/sdxl-lightning",
-            input={"prompt": prompt, "num_inference_steps": 8}
+            "stability-ai/sdxl-turbo",
+            input={"prompt": prompt}
         )
         image_url_temp = output[0]
 
@@ -284,11 +284,11 @@ def generate_image():
         upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
         image_url = upload["response"]["url"]
 
-        # Save chat
+        # Save in chats
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO chats (user_id, message, reply) VALUES (%s,%s,%s);",
+                "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
                 (session["user_id"], f"🎨 Generated image: {prompt}", image_url)
             )
             conn.commit()
@@ -337,6 +337,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
