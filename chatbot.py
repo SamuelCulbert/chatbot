@@ -173,7 +173,7 @@ def chat_api():
         cur = conn.cursor()
         cur.execute("SELECT model FROM users WHERE id=%s;", (session["user_id"],))
         row = cur.fetchone()
-        model_name = (row["model"] if row and row["model"] else "models/gemini-2.0-flash")
+        model_name = (row["model"] if row and row["model"] else "models/gemini-2.5-flash")
 
     try:
         # call Gemini model
@@ -258,4 +258,5 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
