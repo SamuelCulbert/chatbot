@@ -136,16 +136,19 @@
   {% extends "layout.html" %}
   {% block title %}Chat | CulbertAi{% endblock %}
   {% block content %}
-
+  
   <div class="chat-wrapper">
-    <div class="sidebar">
+    <!-- Sidebar -->
+    <aside class="sidebar">
       <h2>CulbertAi 🤖</h2>
-      <button onclick="window.location.href='/settings'">⚙️</button>
-      <button onclick="window.location.href='/logout'">🚪</button>
-    </div>
-
-    <div class="chat-area">
+      <button class="side-btn" onclick="window.location.href='/settings'">⚙️ Settings</button>
+      <button class="side-btn logout" onclick="window.location.href='/logout'">🚪 Logout</button>
+    </aside>
+  
+    <!-- Chat area -->
+    <section class="chat-area">
       <div id="messages" class="messages"></div>
+  
       <div class="input-bar">
         <input id="message" type="text" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
         <button onclick="generateImage()">🎨</button>
@@ -153,12 +156,12 @@
         <button onclick="document.getElementById('imageUpload').click()">📷</button>
         <button onclick="sendMessage()">Send</button>
       </div>
-    </div>
+    </section>
   </div>
-
+  
   <script>
   const messagesDiv = document.getElementById('messages');
-
+  
   async function loadChats() {
     try {
       const res = await fetch('/chats');
@@ -175,17 +178,17 @@
       console.error('Failed to load chats', err);
     }
   }
-
+  
   async function sendMessage() {
     const input = document.getElementById('message');
     const msg = input.value.trim();
     if (!msg) return;
     addMessage('You', msg);
     input.value = '';
-
+  
     const loading = addMessage('Bot', '⏳ Thinking...');
     scrollToBottom();
-
+  
     try {
       const res = await fetch('/chat_api', {
         method: 'POST',
@@ -200,50 +203,47 @@
     }
     scrollToBottom();
   }
-
+  
   function addMessage(sender, text) {
     const div = document.createElement('div');
     div.className = sender === 'You' ? 'msg user' : 'msg bot';
     div.innerHTML = `<span class="sender">${sender}:</span> <span class="text">${text}</span>`;
     messagesDiv.appendChild(div);
+    div.style.animation = "fadeIn 0.25s ease";
     return div;
   }
-
+  
   function scrollToBottom() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
-
+  
   async function uploadImage(e) {
     const file = e.target.files[0];
     if (!file) return;
     addMessage('You', '🖼️ Uploading image...');
-
+  
     const formData = new FormData();
     formData.append('file', file);
-
+  
     const res = await fetch('/upload_image', {
       method: 'POST',
       body: formData,
       credentials: 'include'
     });
-
+  
     const data = await res.json();
-    if (data.reply) {
-      addMessage('Bot', data.reply);
-    } else {
-      addMessage('Bot', '⚠️ ' + (data.error || 'Upload failed'));
-    }
-
+    addMessage('Bot', data.reply || `⚠️ ${data.error || 'Upload failed'}`);
+  
     e.target.value = '';
     scrollToBottom();
   }
-
+  
   async function generateImage() {
     const prompt = document.getElementById('message').value.trim();
     if (!prompt) return;
     addMessage('You', '🎨 ' + prompt);
     const loading = addMessage('Bot', '🧠 Generating image...');
-
+  
     try {
       const res = await fetch('/generate_image', {
         method: 'POST',
@@ -253,15 +253,14 @@
       });
       const data = await res.json();
       loading.textContent = data.reply || data.error || '❌ Feature not available right now';
-    } catch (err) {
+    } catch {
       loading.textContent = '⚠️ Network error';
     }
     scrollToBottom();
   }
-
+  
   loadChats();
   </script>
-
   {% endblock %}
 </body>
 </html>
