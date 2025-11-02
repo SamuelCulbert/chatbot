@@ -274,7 +274,7 @@ def generate_image():
     try:
         # 🧠 Use a stable, public model on Replicate
         output = replicate.run(
-            "black-forest-labs/flux-schnell",
+            "stabilityai/stable-diffusion-3-medium",
             input={"prompt": prompt}
         )
 
@@ -344,6 +344,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
