@@ -92,6 +92,31 @@
   }
 
   loadChats();
+
+  async function uploadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  addMessage('You', '🖼️ Uploading image...');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/upload_image', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.reply) {
+    addMessage('Bot', data.reply);
+  } else {
+    addMessage('Bot', '⚠️ ' + (data.error || 'Upload failed'));
+  }
+
+  e.target.value = ''; // clear file input
+  scrollToBottom();
+  }
+
   </script>
   
   {% endblock %}
