@@ -240,3 +240,18 @@ button {
 .input-bar button:hover {
   transform: scale(1.05);
 }
+
+
+.generated-image {
+  display: block;
+  margin-top: 10px;
+  max-width: 80%;
+  border-radius: 14px;
+  box-shadow: 0 0 20px rgba(0,255,200,0.6);
+  animation: popIn 0.4s ease-out;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
