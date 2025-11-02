@@ -18,8 +18,10 @@
   
     <div class="actions">
       <button onclick="login()">Login</button>
-      <a href="/signup_page" class="link">Create an Account</a>
     </div>
+  
+    <p class="bottom-link">Don’t have an account? <a href="/signup_page">Create one</a></p>
+  
     <p id="status"></p>
   </div>
   
@@ -36,23 +38,71 @@
     }
   
     statusEl.textContent = "⏳ Logging in...";
-    const res = await fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: u, password: p })
-    });
-  
-    const data = await res.json();
-    if(data.success){
-      statusEl.style.color = "green";
-      statusEl.textContent = "✅ Login successful! Redirecting...";
-      setTimeout(() => window.location.href = "/chat", 1500);
-    } else {
-      statusEl.textContent = data.error || "Login failed.";
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      const data = await res.json();
+      if(data.success){
+        statusEl.style.color = "green";
+        statusEl.textContent = "✅ Login successful! Redirecting...";
+        setTimeout(() => window.location.href = "/chat", 1500);
+      } else {
+        statusEl.textContent = data.error || "Login failed.";
+      }
+    } catch (e) {
+      statusEl.textContent = "⚠️ Connection error.";
     }
   }
   </script>
+  
+  <style>
+    .login-box {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      padding: 50px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 420px;
+      max-width: 90%;
+      margin: 50px auto;
+    }
+    
+    .login-box input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1.1rem;
+    }
+    
+    .login-box button {
+      font-size: 1.1rem;
+      padding: 12px 25px;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      background: linear-gradient(90deg, #0078D7, #00B386);
+      cursor: pointer;
+      width: 100%;
+    }
+    
+    .bottom-link {
+      margin-top: 15px;
+      font-size: 0.95rem;
+    }
+    
+    .bottom-link a {
+      color: #0078D7;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
   {% endblock %}
+
 
 </body>
 </html>
