@@ -1,7 +1,6 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from imagekitio import ImageKit
-import replicate
 import base64
 import os
 import psycopg2
@@ -15,7 +14,6 @@ app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 imagekit = ImageKit(
     private_key=os.getenv("IMAGEKIT_PRIVATE_KEY"),
     public_key=os.getenv("IMAGEKIT_PUBLIC_KEY"),
@@ -272,35 +270,49 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"}
-        payload = {"inputs": prompt}
-        hf_url = "https://api-inference.huggingface.co/models/prompthero/openjourney-v4"
+        import requests
 
-        response = requests.post(hf_url, headers=headers, json=payload, timeout=120)
+        # Fal.ai Stable Diffusion XL endpoint
+        fal_url = "https://fal.run/fal-ai/flux/dev"
 
-        if response.status_code != 200:
-            return jsonify({"error": f"Hugging Face error: {response.text}"}), response.status_code
+        headers = {
+            "Authorization": f"Key {os.getenv('FAL_KEY')}",
+            "Content-Type": "application/json"
+        }
 
-        # Upload to ImageKit
+        payload = {"prompt": prompt}
+
+        r = requests.post(fal_url, headers=headers, json=payload, timeout=120)
+        if r.status_code != 200:
+            return jsonify({"error": f"Fal.ai error: {r.text}"}), r.status_code
+
+        result = r.json()
+        image_url = result.get("images", [{}])[0].get("url")
+
+        if not image_url:
+            return jsonify({"error": "No image returned from Fal.ai"}), 500
+
+        # Save to ImageKit
         upload = imagekit.upload(
-            file=response.content,
-            file_name=f"generated_{session['user_id']}.png"
+            file=image_url,
+            file_name=f"fal_generated_{session['user_id']}.png"
         )
-        image_url = upload.url
+        uploaded_url = upload.url
 
-        # Save chat entry
+        # Save chat record
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
-                (session["user_id"], f"🖼️ Generated image: {prompt}", image_url)
+                (session["user_id"], f"🖼️ Generated image: {prompt}", uploaded_url)
             )
             conn.commit()
 
-        return jsonify({"image": image_url})
+        return jsonify({"image": uploaded_url})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -343,6 +355,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
