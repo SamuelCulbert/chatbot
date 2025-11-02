@@ -272,22 +272,24 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # Use a stable, public Replicate model
+        # 🧠 Use a stable, public model on Replicate
         output = replicate.run(
-            "black-forest-labs/flux-1.1-pro",
+            "black-forest-labs/flux-schnell",
             input={"prompt": prompt}
         )
 
-        # Fix: Convert FileOutput to string
+        # Convert FileOutput object to string (URL)
         image_url_temp = str(output)
 
-        # Upload to ImageKit
+        # 🖼️ Download and upload to ImageKit
         import requests
         img_data = requests.get(image_url_temp).content
         upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
-        image_url = upload["response"]["url"]
 
-        # Save the chat in DB
+        # ✅ Fix: Use the .url attribute, not ["response"]["url"]
+        image_url = upload.url
+
+        # Save image reference in chat DB
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -297,8 +299,10 @@ def generate_image():
             conn.commit()
 
         return jsonify({"image": image_url})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 # ----------------- Settings update API ----------------- #
@@ -340,6 +344,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
