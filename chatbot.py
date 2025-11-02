@@ -273,7 +273,7 @@ def generate_image():
     try:
         # ✅ Use a currently working model
         output = replicate.run(
-            "stability-ai/sdxl-turbo",
+            "black-forest-labs/flux-1.1-pro",
             input={"prompt": prompt}
         )
         image_url_temp = output[0]
@@ -337,6 +337,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
