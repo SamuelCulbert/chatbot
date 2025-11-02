@@ -271,20 +271,20 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # 1️⃣ generate with replicate (sdxl-lightning is fast)
+        # Generate image via Replicate (stable public model)
         output = replicate.run(
-            "stability-ai/sdxl-lightning:5d4d49e6b845ca52f8ad4cd9e9d9e8f0d177f47a9a8c3df31b43b07efda3d166",
-            input={"prompt": prompt}
+            "stability-ai/sdxl-lightning",
+            input={"prompt": prompt, "num_inference_steps": 8}
         )
         image_url_temp = output[0]
 
-        # 2️⃣ download + upload to ImageKit
+        # Download and upload to ImageKit
         import requests
         img_data = requests.get(image_url_temp).content
         upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
         image_url = upload["response"]["url"]
 
-        # 3️⃣ save placeholder + URL
+        # Save chat
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -296,6 +296,7 @@ def generate_image():
         return jsonify({"image": image_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # ----------------- Settings update API ----------------- #
 @app.route("/update_settings", methods=["POST"])
@@ -336,6 +337,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
