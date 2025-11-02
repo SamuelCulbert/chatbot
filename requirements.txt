@@ -1,2 +1,4 @@
 flask>=3.0.0
 google-generativeai>=0.8.2
+psycopg2-binary>=2.9
+
