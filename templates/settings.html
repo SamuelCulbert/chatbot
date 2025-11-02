@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <title>Settings</title>
+</head>
+<body>
+  {% extends "layout.html" %}
+  {% block title %}Settings | Samuel Chat{% endblock %}
+  {% block content %}
+  <div class="settings-box">
+    <h2>Settings ⚙️</h2>
+    <label>Email:</label>
+    <input id="email" value="{{ user.email or '' }}">
+    <label>Birthday:</label>
+    <input id="birthday" type="date" value="{{ user.birthday or '' }}">
+    <label>Model:</label>
+    <select id="model">
+      <option value="models/gemini-2.0-flash" {% if user.model == "models/gemini-2.0-flash" %}selected{% endif %}>Gemini Flash</option>
+      <option value="models/gemini-2.0-pro" {% if user.model == "models/gemini-2.0-pro" %}selected{% endif %}>Gemini Pro</option>
+    </select>
+    <button onclick="save()">Save</button>
+    <button onclick="logout()">Logout</button>
+    <p id="status"></p>
+  </div>
+  
+  <script>
+    async function save(){
+    const data = {
+      email: document.getElementById('email').value,
+      birthday: document.getElementById('birthday').value,
+      model: document.getElementById('model').value
+    };
+    const res = await fetch('/update_settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
+    const r = await res.json();
+    document.getElementById('status').innerText = r.success ? '✅ Saved!' : '❌ Failed';
+  }
+  function logout(){
+    window.location.href='/logout';
+  }
+  </script>
+  {% endblock %}
+
+</body>
+</html>
