@@ -224,19 +224,32 @@
   }
 
   async function uploadImage(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    addMessage('You', '🖼️ Uploading image...');
+  const file = e.target.files[0];
+  if (!file) return;
+  addMessage('You', '🖼️ Uploading image...');
 
-    const formData = new FormData();
-    formData.append('file', file);
+  const formData = new FormData();
+  formData.append('file', file);
 
-    const res = await fetch('/upload_image', { method: 'POST', body: formData });
+  try {
+    const res = await fetch('/upload_image', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include' // ✅ ensures session is included
+    });
+
     const data = await res.json();
-    addMessage('Bot', data.reply || `⚠️ ${data.error || 'Upload failed'}`);
+    if (data.reply) {
+      addMessage('Bot', data.reply);
+    } else {
+      addMessage('Bot', '⚠️ ' + (data.error || 'Upload failed'));
+    }
+  } catch (err) {
+    addMessage('Bot', '❌ Upload error');
+  }
 
-    e.target.value = ''; 
-    scrollToBottom();
+  e.target.value = ''; 
+  scrollToBottom();
   }
 
   async function generateImage() {
