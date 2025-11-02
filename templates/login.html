@@ -11,82 +11,49 @@
   {% block title %}Login | Samuel Chat{% endblock %}
   {% block content %}
   <div class="login-box large">
-    <h2>Welcome 👋</h2>
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
+    <h2>Welcome Back 👋</h2>
+  
+    <input id="username" placeholder="Username" autocomplete="username">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  
     <div class="actions">
       <button onclick="login()">Login</button>
-      <button onclick="signup()">Sign Up</button>
+      <a href="/signup_page" class="link">Create an Account</a>
     </div>
     <p id="status"></p>
   </div>
+  
   <script>
-      async function signup(){
-      const u = username.value.trim();
-      const p = password.value.trim();
-      const statusEl = document.getElementById('status');
-    
-      if(!u || !p){
-        statusEl.innerText = "Please fill all fields.";
-        statusEl.style.color = "red";
-        return;
-      }
-    
-      try {
-        const res = await fetch('/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-    
-        const data = await res.json();
-    
-        if (data.success) {
-          statusEl.innerText = "✅ Sign up success! Redirecting...";
-          statusEl.style.color = "green";
-          setTimeout(() => { window.location.href = '/chat'; }, 2000);
-        } else {
-          statusEl.innerText = data.error || "Signup failed.";
-          statusEl.style.color = "red";
-        }
-      } catch (err) {
-        statusEl.innerText = "⚠️ Network error.";
-        statusEl.style.color = "red";
-      }
-    }
-    
     async function login(){
-      const u = username.value.trim();
-      const p = password.value.trim();
-      const statusEl = document.getElementById('status');
-    
-      if(!u || !p){
-        statusEl.innerText = "Please fill all fields.";
-        statusEl.style.color = "red";
-        return;
-      }
-    
-      try {
-        const res = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-    
-        if (data.success) {
-          window.location.href = '/chat';
-        } else {
-          statusEl.innerText = data.error || "Login failed.";
-          statusEl.style.color = "red";
-        }
-      } catch (err) {
-        statusEl.innerText = "⚠️ Network error.";
-        statusEl.style.color = "red";
-      }
+    const u = username.value.trim();
+    const p = password.value.trim();
+    const statusEl = document.getElementById("status");
+    statusEl.style.color = "red";
+  
+    if(!u || !p){
+      statusEl.textContent = "Please fill all fields.";
+      return;
     }
+  
+    statusEl.textContent = "⏳ Logging in...";
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p })
+    });
+  
+    const data = await res.json();
+    if(data.success){
+      statusEl.style.color = "green";
+      statusEl.textContent = "✅ Login successful! Redirecting...";
+      setTimeout(() => window.location.href = "/chat", 1500);
+    } else {
+      statusEl.textContent = data.error || "Login failed.";
+    }
+  }
   </script>
   {% endblock %}
+
 </body>
 </html>
 
