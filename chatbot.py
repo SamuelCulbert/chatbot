@@ -11,7 +11,7 @@ import requests
 app = Flask(__name__)
 # Replace with a secure random secret in production (and move to env var)
 app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
-
+DEEP_AI_KEY = os.getenv("DEEP_AI_KEY")
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 imagekit = ImageKit(
@@ -266,49 +266,44 @@ def generate_image():
 
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
+
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        import requests
-
-        # Fal.ai Stable Diffusion XL endpoint
-        fal_url = "https://fal.run/fal-ai/flux/dev"
-
-        headers = {
-            "Authorization": f"Key {os.getenv('FAL_KEY')}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {"prompt": prompt}
-
-        r = requests.post(fal_url, headers=headers, json=payload, timeout=120)
-        if r.status_code != 200:
-            return jsonify({"error": f"Fal.ai error: {r.text}"}), r.status_code
-
-        result = r.json()
-        image_url = result.get("images", [{}])[0].get("url")
-
-        if not image_url:
-            return jsonify({"error": "No image returned from Fal.ai"}), 500
-
-        # Save to ImageKit
-        upload = imagekit.upload(
-            file=image_url,
-            file_name=f"fal_generated_{session['user_id']}.png"
+        # --- Call DeepAI API ---
+        response = requests.post(
+            "https://api.deepai.org/api/text2img",
+            data={"text": prompt},
+            headers={"api-key": DEEP_AI_KEY},
+            timeout=60
         )
-        uploaded_url = upload.url
 
-        # Save chat record
+        if response.status_code != 200:
+            return jsonify({"error": f"DeepAI failed: {response.text}"}), 500
+
+        deepai_data = response.json()
+        image_url = deepai_data.get("output_url")
+
+        # --- Upload to ImageKit ---
+        upload = imagekit.upload(
+            file=image_url,  # upload directly via URL
+            file_name=f"{session['user_id']}_generated_image.jpg"
+        )
+
+        # --- Save chat record (optional) ---
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
-                (session["user_id"], f"🖼️ Generated image: {prompt}", uploaded_url)
+                (session["user_id"], prompt, "[Image generated]")
             )
             conn.commit()
 
-        return jsonify({"image": uploaded_url})
+        return jsonify({
+            "reply": "🖼️ Image generated successfully!",
+            "image_url": upload.response_metadata.raw.get("url", image_url)
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -355,6 +350,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
