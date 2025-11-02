@@ -261,54 +261,31 @@ def upload_image():
 
 @app.route("/generate_image", methods=["POST"])
 def generate_image():
+    """
+    Temporarily disabled image generation feature.
+    Returns a friendly message instead of an API call.
+    """
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
-
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
-    try:
-        # --- Call DeepAI API ---
-        response = requests.post(
-            "https://api.deepai.org/api/text2img",
-            data={"text": prompt},
-            headers={"api-key": DEEP_AI_KEY},
-            timeout=60
+    # Just respond with a message
+    reply = "🖼️ Image generation is not available for now. Please try again later."
+
+    # Save to chat history
+    with get_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
+            (session["user_id"], prompt, reply)
         )
+        conn.commit()
 
-        if response.status_code != 200:
-            return jsonify({"error": f"DeepAI failed: {response.text}"}), 500
-
-        deepai_data = response.json()
-        image_url = deepai_data.get("output_url")
-
-        # --- Upload to ImageKit ---
-        upload = imagekit.upload(
-            file=image_url,  # upload directly via URL
-            file_name=f"{session['user_id']}_generated_image.jpg"
-        )
-
-        # --- Save chat record (optional) ---
-        with get_conn() as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
-                (session["user_id"], prompt, "[Image generated]")
-            )
-            conn.commit()
-
-        return jsonify({
-            "reply": "🖼️ Image generated successfully!",
-            "image_url": upload.response_metadata.raw.get("url", image_url)
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
+    return jsonify({"reply": reply})
 
 
 # ----------------- Settings update API ----------------- #
@@ -350,6 +327,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
