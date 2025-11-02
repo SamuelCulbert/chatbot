@@ -265,31 +265,34 @@ def upload_image():
 def generate_image():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 403
+
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # ✅ Use a currently working model
+        # Use a stable, public Replicate model
         output = replicate.run(
             "black-forest-labs/flux-1.1-pro",
             input={"prompt": prompt}
         )
-        image_url_temp = output[0]
 
-        # Download and upload to ImageKit
+        # Fix: Convert FileOutput to string
+        image_url_temp = str(output)
+
+        # Upload to ImageKit
         import requests
         img_data = requests.get(image_url_temp).content
         upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
         image_url = upload["response"]["url"]
 
-        # Save in chats
+        # Save the chat in DB
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
-                (session["user_id"], f"🎨 Generated image: {prompt}", image_url)
+                (session["user_id"], f"🖼️ Generated image: {prompt}", image_url)
             )
             conn.commit()
 
@@ -337,6 +340,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
