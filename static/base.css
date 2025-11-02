@@ -116,3 +116,127 @@ button {
   padding: 8px 0;
 }
 
+/* === FUTURISTIC CHAT UI === */
+.chat-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  height: 85vh;
+  gap: 20px;
+  margin: 30px;
+}
+
+.sidebar {
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 25px;
+  width: 220px;
+  box-shadow: 0 0 20px rgba(0,255,255,0.1);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 15px;
+}
+
+.sidebar h2 {
+  background: linear-gradient(90deg, #00e0ff, #00ff9d);
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+.sidebar button {
+  background: linear-gradient(90deg, #00e0ff, #00ff9d);
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sidebar button:hover {
+  opacity: 0.8;
+}
+
+.chat-area {
+  flex: 1;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 25px rgba(0,255,255,0.08);
+  position: relative;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  scroll-behavior: smooth;
+}
+
+.msg {
+  margin: 8px 0;
+  padding: 10px 15px;
+  border-radius: 12px;
+  max-width: 80%;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #0078D7, #00B386);
+  color: white;
+}
+
+.msg.bot {
+  align-self: flex-start;
+  background: #f0f0f0;
+  color: #222;
+}
+
+.sender {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.input-bar {
+  display: flex;
+  gap: 10px;
+  padding-top: 15px;
+}
+
+.input-bar input {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  outline: none;
+}
+
+.input-bar input:focus {
+  border-color: #00b7ff;
+  box-shadow: 0 0 6px rgba(0, 183, 255, 0.5);
+}
+
+.input-bar button {
+  background: linear-gradient(90deg, #0078D7, #00B386);
+  border: none;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.input-bar button:hover {
+  transform: scale(1.05);
+}
