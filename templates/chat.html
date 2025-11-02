@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Mini Chatbot</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <title>Samuel Chat 💬</title>
 </head>
 <body>
   {% extends "layout.html" %}
@@ -28,136 +28,69 @@
   </div>
 
   <script>
-    const messagesDiv = document.getElementById('messages');
-  
-    async function loadChats() {
-      try {
-        const res = await fetch('/chats');
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          messagesDiv.innerHTML = '';
-          for (const chat of data) {
-            addMessage('You', chat.message);
-            addMessage('Bot', chat.reply);
-          }
-          scrollToBottom();
+  const messagesDiv = document.getElementById('messages');
+
+  async function loadChats() {
+    try {
+      const res = await fetch('/chats');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        messagesDiv.innerHTML = '';
+        for (const chat of data) {
+          addMessage('You', chat.message);
+          addMessage('Bot', chat.reply);
         }
-      } catch (err) {
-        console.error('Failed to load chats', err);
+        scrollToBottom();
       }
+    } catch (err) {
+      console.error('Failed to load chats', err);
     }
-  
-    async function sendMessage() {
-      const input = document.getElementById('message');
-      const msg = input.value.trim();
-      if (!msg) return;
-      addMessage('You', msg);
-      input.value = '';
-  
-      const loading = addMessage('Bot', '⏳ Thinking...');
-      scrollToBottom();
-  
-      try {
-        const res = await fetch('/chat_api', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({message: msg})
-        });
-        const data = await res.json();
-        if (data.reply) {
-          loading.textContent = data.reply;
-        } else {
-          loading.textContent = `⚠️ ${data.error || 'Bot error'}`;
-        }
-      } catch (err) {
-        loading.textContent = '❌ Connection error';
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('message');
+    const msg = input.value.trim();
+    if (!msg) return;
+    addMessage('You', msg);
+    input.value = '';
+
+    const loading = addMessage('Bot', '⏳ Thinking...');
+    scrollToBottom();
+
+    try {
+      const res = await fetch('/chat_api', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message: msg})
+      });
+      const data = await res.json();
+      if (data.reply) {
+        loading.textContent = data.reply;
+      } else {
+        loading.textContent = `⚠️ ${data.error || 'Bot error'}`;
       }
-      scrollToBottom();
+    } catch (err) {
+      loading.textContent = '❌ Connection error';
     }
-  
-    function addMessage(sender, text) {
-      const div = document.createElement('div');
-      div.className = sender === 'You' ? 'user' : 'bot';
-      div.textContent = `${sender}: ${text}`;
-      messagesDiv.appendChild(div);
-      return div;
-    }
-  
-    function scrollToBottom() {
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-  
-    // 🔥 Load previous chats immediately
-    loadChats();
+    scrollToBottom();
+  }
+
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.className = sender === 'You' ? 'user' : 'bot';
+    div.textContent = `${sender}: ${text}`;
+    messagesDiv.appendChild(div);
+    return div;
+  }
+
+  function scrollToBottom() {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  // 🔥 Load previous chats immediately
+  loadChats();
   </script>
   
   {% endblock %}
-  
-  <style>
-    .chat-container {
-      display: flex;
-      gap: 20px;
-      width: 90%;
-      max-width: 1000px;
-      margin: 40px auto;
-    }
-    .sidebar {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      flex: 0 0 200px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    .chatbox {
-      background: white;
-      border-radius: 10px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      max-height: 70vh;
-    }
-    .user {
-      color: #0078D7;
-      margin: 6px 0;
-    }
-    .bot {
-      color: #00B386;
-      margin: 6px 0;
-    }
-    .input-area {
-      display: flex;
-      gap: 10px;
-    }
-    #userInput {
-      flex: 1;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    #sendBtn {
-      background: linear-gradient(90deg, #0078D7, #00B386);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 20px;
-      cursor: pointer;
-    }
-    #sendBtn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  </style>
-  {% endblock %}
-
 </body>
 </html>
