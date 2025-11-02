@@ -8,7 +8,7 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.errors
 import google.generativeai as genai
-
+import requests
 app = Flask(__name__)
 # Replace with a secure random secret in production (and move to env var)
 app.secret_key = "8f50c9fbcc43083224dd25a889d7c1d3"
@@ -272,24 +272,26 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # 🧠 Use a stable, public model on Replicate
-        output = replicate.run(
-            "stabilityai/stable-diffusion-3-medium",
-            input={"prompt": prompt}
+        # Send prompt to Hugging Face inference API
+        headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"}
+        payload = {"inputs": prompt}
+        hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium"
+
+        response = requests.post(hf_url, headers=headers, json=payload, timeout=120)
+
+        if response.status_code != 200:
+            return jsonify({"error": f"Hugging Face error: {response.text}"}), response.status_code
+
+        # Upload the resulting image to ImageKit
+        upload = imagekit.upload(
+            file=response.content,
+            file_name=f"generated_{session['user_id']}.png"
         )
 
-        # Convert FileOutput object to string (URL)
-        image_url_temp = str(output)
-
-        # 🖼️ Download and upload to ImageKit
-        import requests
-        img_data = requests.get(image_url_temp).content
-        upload = imagekit.upload(file=img_data, file_name=f"generated_{session['user_id']}.png")
-
-        # ✅ Fix: Use the .url attribute, not ["response"]["url"]
+        # Access URL safely (new ImageKit SDK format)
         image_url = upload.url
 
-        # Save image reference in chat DB
+        # Save in chat history
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -302,6 +304,7 @@ def generate_image():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -344,6 +347,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
