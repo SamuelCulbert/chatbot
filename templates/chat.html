@@ -12,50 +12,139 @@
   {% block content %}
   <div class="chat-container">
     <div class="sidebar">
-      <h3>Your Chats</h3>
-      <button onclick="loadChats()">⟳ Refresh</button>
-      <div id="chatList"></div>
+      <h2>Samuel Chat 🤖</h2>
+      <button onclick="window.location.href='/settings'">⚙️ Settings</button>
+      <button onclick="logout()">🚪 Logout</button>
     </div>
+  
     <div class="chatbox">
       <div id="messages"></div>
       <div class="input-area">
-        <input id="msg" placeholder="Type your message..." onkeypress="if(event.key==='Enter')send()">
-        <button onclick="send()">Send</button>
+        <input id="userInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendMessage();">
+        <button id="sendBtn" onclick="sendMessage()">Send</button>
       </div>
     </div>
   </div>
   
   <script>
-  async function loadChats(){
-    const res = await fetch('/chats');
-    const chats = await res.json();
-    const list = document.getElementById('chatList');
-    list.innerHTML = '';
-    chats.forEach(c=>{
-      const div=document.createElement('div');
-      div.className='chat-item';
-      div.innerHTML=`<p>${c.message}</p><button onclick="del(${c.id})">🗑</button>`;
-      div.onclick=()=>showChat(c);
-      list.appendChild(div);
-    });
+    function addMessage(role, text) {
+    const msgBox = document.getElementById("messages");
+    const msgDiv = document.createElement("div");
+    msgDiv.className = role;
+    msgDiv.innerHTML = `<strong>${role === "user" ? "You" : "Bot"}:</strong> ${text}`;
+    msgBox.appendChild(msgDiv);
+    scrollToBottom();
+    return msgDiv;
   }
-  function showChat(c){
-    document.getElementById('messages').innerHTML=`<p class='user'><b>You:</b> ${c.message}</p><p class='bot'><b>Bot:</b> ${c.reply}</p>`;
+  
+  function scrollToBottom() {
+    const msgBox = document.getElementById("messages");
+    msgBox.scrollTop = msgBox.scrollHeight;
   }
-  async function send(){
-    const msg=document.getElementById('msg').value;
-    const res=await fetch('/chat_api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
-    const data=await res.json();
-    document.getElementById('messages').innerHTML+=`<p class='user'><b>You:</b> ${msg}</p><p class='bot'><b>Bot:</b> ${data.reply}</p>`;
-    document.getElementById('msg').value='';
-    loadChats();
+  
+  async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const message = input.value.trim();
+    if (!message) return;
+  
+    addMessage("user", message);
+    input.value = "";
+  
+    const sendBtn = document.getElementById("sendBtn");
+    sendBtn.disabled = true;
+  
+    const typingMsg = addMessage("bot", "💭 Typing...");
+  
+    try {
+      const res = await fetch("/chat_api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+  
+      const data = await res.json();
+      typingMsg.remove();
+      sendBtn.disabled = false;
+  
+      if (data.reply) addMessage("bot", data.reply);
+      else addMessage("bot", "⚠️ " + (data.error || "Error"));
+    } catch (e) {
+      typingMsg.remove();
+      sendBtn.disabled = false;
+      addMessage("bot", "⚠️ Connection error.");
+    }
   }
-  async function del(id){
-    await fetch('/delete_chat/'+id,{method:'DELETE'});
-    loadChats();
+  
+  function logout() {
+    window.location.href = "/logout";
   }
-  window.onload=loadChats;
   </script>
+  
+  <style>
+    .chat-container {
+      display: flex;
+      gap: 20px;
+      width: 90%;
+      max-width: 1000px;
+      margin: 40px auto;
+    }
+    .sidebar {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      flex: 0 0 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .chatbox {
+      background: white;
+      border-radius: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      max-height: 70vh;
+    }
+    .user {
+      color: #0078D7;
+      margin: 6px 0;
+    }
+    .bot {
+      color: #00B386;
+      margin: 6px 0;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+    }
+    #userInput {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    #sendBtn {
+      background: linear-gradient(90deg, #0078D7, #00B386);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+    }
+    #sendBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
   {% endblock %}
+
 </body>
 </html>
