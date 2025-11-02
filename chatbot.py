@@ -272,26 +272,23 @@ def generate_image():
         return jsonify({"error": "Prompt required"}), 400
 
     try:
-        # Send prompt to Hugging Face inference API
         headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"}
         payload = {"inputs": prompt}
-        hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
+        hf_url = "https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4"
 
         response = requests.post(hf_url, headers=headers, json=payload, timeout=120)
 
         if response.status_code != 200:
             return jsonify({"error": f"Hugging Face error: {response.text}"}), response.status_code
 
-        # Upload the resulting image to ImageKit
+        # Upload to ImageKit
         upload = imagekit.upload(
             file=response.content,
             file_name=f"generated_{session['user_id']}.png"
         )
-
-        # Access URL safely (new ImageKit SDK format)
         image_url = upload.url
 
-        # Save in chat history
+        # Save chat entry
         with get_conn() as conn:
             cur = conn.cursor()
             cur.execute(
@@ -304,7 +301,6 @@ def generate_image():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 
@@ -347,6 +343,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
