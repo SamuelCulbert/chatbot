@@ -1,6 +1,7 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from imagekitio import ImageKit
+import base64
 import os
 import psycopg2
 import psycopg2.extras
@@ -259,6 +260,47 @@ def upload_image():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/generate_image", methods=["POST"])
+def generate_image():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json()
+    prompt = data.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"error": "Prompt required"}), 400
+
+    try:
+        # 1️⃣ Generate image from Gemini
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
+        result = model.generate_image(prompt)
+
+        if not hasattr(result, "image_base64") or not result.image_base64:
+            return jsonify({"error": "Gemini did not return image data"}), 500
+
+        image_data = base64.b64decode(result.image_base64)
+
+        # 2️⃣ Upload to ImageKit
+        upload = imagekit.upload(
+            file=image_data,
+            file_name=f"generated_{session['user_id']}.png"
+        )
+
+        image_url = upload["response"]["url"]
+
+        # 3️⃣ Save a placeholder and URL to DB
+        with get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO chats (user_id, message, reply) VALUES (%s, %s, %s);",
+                (session["user_id"], f"🎨 Generated image: {prompt}", image_url)
+            )
+            conn.commit()
+
+        return jsonify({"image": image_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # ----------------- Settings update API ----------------- #
 @app.route("/update_settings", methods=["POST"])
@@ -299,6 +341,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
