@@ -240,7 +240,6 @@ def upload_image():
     upload = imagekit.upload(
         file=file,  # can be file object
         file_name=file.filename,
-        folder="/temp_uploads/",
         use_unique_file_name=True
     )
 
@@ -319,6 +318,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
