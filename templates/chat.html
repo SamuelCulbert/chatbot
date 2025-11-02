@@ -23,6 +23,7 @@
       <div class="input-bar">
         <div class="input-bar">
           <input id="message" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
+          <button onclick="generateImage()">🎨</button>
           <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
           <button onclick="document.getElementById('imageUpload').click()">📷</button>
           <button onclick="sendMessage()">Send</button>
@@ -117,6 +118,29 @@
   scrollToBottom();
   }
 
+  async function generateImage() {
+  const prompt = document.getElementById('message').value.trim();
+  if (!prompt) return;
+  addMessage('You', '🎨 ' + prompt);
+  const loading = addMessage('Bot', '🧠 Generating image...');
+  
+  try {
+    const res = await fetch('/generate_image', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    const data = await res.json();
+    if (data.image) {
+      loading.innerHTML = `<img src="${data.image}" class="generated-image" alt="AI image">`;
+    } else {
+      loading.textContent = data.error || '❌ Failed to generate image';
+    }
+  } catch (err) {
+    loading.textContent = '⚠️ Network error';
+  }
+  scrollToBottom();
+  }
   </script>
   
   {% endblock %}
