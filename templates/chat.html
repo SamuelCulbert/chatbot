@@ -21,8 +21,12 @@
     <div class="chat-area">
       <div id="messages" class="messages"></div>
       <div class="input-bar">
-        <input id="message" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
-        <button onclick="sendMessage()">Send</button>
+        <div class="input-bar">
+          <input id="message" placeholder="Type your message..." onkeypress="if(event.key==='Enter'){sendMessage();}">
+          <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
+          <button onclick="document.getElementById('imageUpload').click()">📷</button>
+          <button onclick="sendMessage()">Send</button>
+        </div>
       </div>
     </div>
   </div>
