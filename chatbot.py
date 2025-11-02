@@ -275,7 +275,7 @@ def generate_image():
         # Send prompt to Hugging Face inference API
         headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"}
         payload = {"inputs": prompt}
-        hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium"
+        hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
 
         response = requests.post(hf_url, headers=headers, json=payload, timeout=120)
 
@@ -347,6 +347,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
