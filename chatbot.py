@@ -98,6 +98,12 @@ def logout():
     session.pop("user_id", None)
     return redirect(url_for("login_page"))
 
+@app.route("/tutorial")
+def tutorial_page():
+    if "user_id" not in session:
+        return redirect(url_for("login_page"))
+    return render_template("tutorial.html")
+
 # ----------------- Auth APIs ----------------- #
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -327,6 +333,7 @@ def models_list():
 # ----------------- Run ----------------- #
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 
 
